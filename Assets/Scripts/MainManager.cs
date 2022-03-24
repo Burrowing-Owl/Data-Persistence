@@ -12,16 +12,26 @@ public class MainManager : MonoBehaviour
 
     public Text ScoreText;
     public GameObject GameOverText;
-    
-    private bool m_Started = false;
-    private int m_Points;
+    public GameObject bestScore;
+    public GameObject congratulations;
+    public GameObject inputField;
+
+    private bool m_Started = false; 
+    public static int m_Points;
     
     private bool m_GameOver = false;
 
-    
+    //score manager stuff
+    private ScoreManager scoreManager;
+    private bool m_HighScore = false;
+
     // Start is called before the first frame update
     void Start()
     {
+        scoreManager = new ScoreManager();
+        scoreManager.ReadHighScore();
+        updateBestScore(scoreManager.GetPrevName(), scoreManager.GetPrevScore());
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -52,6 +62,17 @@ public class MainManager : MonoBehaviour
                 Ball.transform.SetParent(null);
                 Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
             }
+        }else if (m_HighScore)
+        {
+            if(Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)){
+                congratulations.SetActive(false);
+                inputField.SetActive(false);
+                updateBestScore(scoreManager.GetPrevName(), m_Points);
+                m_HighScore = false;
+                m_GameOver = true;
+                m_Points = 0;
+                GameOverText.SetActive(true);
+            }
         }
         else if (m_GameOver)
         {
@@ -70,7 +91,22 @@ public class MainManager : MonoBehaviour
 
     public void GameOver()
     {
-        m_GameOver = true;
-        GameOverText.SetActive(true);
+        if (m_Points > scoreManager.GetPrevScore())
+        {
+            congratulations.SetActive(true);
+            inputField.SetActive(true);
+            m_HighScore = true;
+        }
+        else
+        {
+            m_GameOver = true;
+            GameOverText.SetActive(true);
+        }
+    }
+
+    private void updateBestScore(string name = "nobody", int score = 0)
+    {
+        GameObject bestScoreObject = GameObject.Find("Best Score");
+        bestScoreObject.GetComponent<Text>().text = "Best Score : " + name + " " + score;
     }
 }
